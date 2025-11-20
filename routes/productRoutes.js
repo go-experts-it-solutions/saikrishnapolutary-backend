@@ -6,15 +6,18 @@ const auth = require("../middleware/auth");
 const {
   addProduct,
   getProducts,
-  editProduct
+  editProduct,
+  deleteProduct,
+  getProductById
 } = require("../controllers/productController");
 
 // Public Route → Anyone can see products
 router.get("/getallproducts", getProducts);
+router.get("/:id", getProductById);
 
 // Protected Routes → Only Admin
 router.post("/add", auth, upload.array("files"), addProduct);
 router.put("/edit/:id", auth,  upload.array("files"),editProduct);
-// router.delete("/delete/:id", auth, deleteProduct);
+router.delete("/delete/:id", auth, deleteProduct);
 
 module.exports = router;

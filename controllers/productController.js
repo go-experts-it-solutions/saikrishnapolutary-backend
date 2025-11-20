@@ -73,3 +73,77 @@ exports.getProducts = async (req, res) => {
   }
 };
 
+
+
+exports.deleteProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Find the product first to get file details
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return res.status(404).json({ 
+        success: false,
+        error: "Product not found" 
+      });
+    }
+
+    // Delete all files from Cloudinary
+    if (product.files && product.files.length > 0) {
+      for (const file of product.files) {
+        if (file.filename) {
+          try {
+            await cloudinary.uploader.destroy(file.filename, {
+              resource_type: "auto", // handles images, videos, raw files
+              invalidate: true // clears CDN cache
+            });
+            console.log(`Deleted file from Cloudinary: ${file.filename}`);
+          } catch (cloudinaryError) {
+            console.error(`Failed to delete ${file.filename}:`, cloudinaryError);
+            // Continue with deletion even if Cloudinary fails
+          }
+        }
+      }
+    }
+
+    // Delete the product from database
+    await Product.findByIdAndDelete(id);
+
+    res.json({ 
+      success: true,
+      message: "Product and associated files deleted successfully" 
+    });
+  } catch (err) {
+    console.error("Delete Product Error:", err);
+    res.status(500).json({ 
+      success: false,
+      error: err.message 
+    });
+  }
+};
+
+// Get Single Product by ID
+exports.getProductById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return res.status(404).json({ 
+        success: false,
+        error: "Product not found" 
+      });
+    }
+
+    res.json({
+      success: true,
+      product
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      error: "Failed to fetch product", 
+      details: err.message 
+    });
+  }
+};
