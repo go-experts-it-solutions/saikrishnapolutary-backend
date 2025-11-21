@@ -8,7 +8,7 @@ const {
   getProducts,
   editProduct,
   deleteProduct,
-  getProductById
+  getProductById,getProductsByCategory 
 } = require("../controllers/productController");
 
 
@@ -17,6 +17,7 @@ router.get("/getallproducts", getProducts);
 router.post("/add", auth, upload.array("files"), addProduct);
 router.put("/edit/:id", auth, upload.array("files"), editProduct);
 router.delete("/delete/:id", auth, deleteProduct);
+router.get('/category/:category', getProductsByCategory);
 
 router.get("/:id", getProductById); // <-- Always keep dynamic last
 

@@ -143,3 +143,25 @@ exports.getProductById = async (req, res) => {
     });
   }
 };
+
+
+
+exports.getProductsByCategory = async (req, res) => {
+  try {
+    // Convert dashed slug to proper category (capitalize and replace dashes)
+    const categorySlug = req.params.category;
+    const category = categorySlug
+      .split('-')
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+      .join(' ');
+
+    // Query to match either the slug or the normalized category (recommended)
+    const products = await Product.find({
+      category: { $regex: new RegExp("^" + category + "$", "i") }
+    });
+
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching products", error: err.message });
+  }
+};

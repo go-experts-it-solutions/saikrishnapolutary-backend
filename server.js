@@ -10,6 +10,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get("/test", (req, res) => {
+  res.json({ success: true, message: "WelCome to Sai Krishna Polutry 🚀" });
+});
+
+
 // Routes
 app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/products", require("./routes/productRoutes"));
