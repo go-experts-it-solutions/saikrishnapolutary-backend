@@ -18,7 +18,7 @@ exports.registerAdmin = async (req, res) => {
       expiresIn: "7d",
     });
 
-    console.log("jwttokenid",token)
+    // console.log("jwttokenid",token)
 
     res.json({
       message: "Admin registered successfully",

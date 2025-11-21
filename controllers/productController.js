@@ -93,7 +93,7 @@ exports.deleteProduct = async (req, res) => {
             await cloudinary.uploader.destroy(file.filename, {
               resource_type: "image",
             });
-            console.log("Deleted:", file.filename);
+            // console.log("Deleted:", file.filename);
           } catch (err) {
             console.error("Cloudinary delete failed:", err);
           }
