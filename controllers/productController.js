@@ -82,41 +82,36 @@ exports.deleteProduct = async (req, res) => {
     if (!product) {
       return res.status(404).json({
         success: false,
-        error: "Product not found"
+        error: "Product not found",
       });
     }
 
-    // Delete all files from Cloudinary
     if (product.files && product.files.length > 0) {
       for (const file of product.files) {
         if (file.filename) {
           try {
             await cloudinary.uploader.destroy(file.filename, {
-              resource_type: "auto",
-              invalidate: true
+              resource_type: "image",
             });
-            console.log(`Deleted file from Cloudinary: ${file.filename}`);
-          } catch (cloudinaryError) {
-            console.error(`Failed to delete ${file.filename}:`, cloudinaryError);
+            console.log("Deleted:", file.filename);
+          } catch (err) {
+            console.error("Cloudinary delete failed:", err);
           }
         }
       }
     }
 
     await Product.findByIdAndDelete(id);
+
     res.json({
       success: true,
-      message: "Product and associated files deleted successfully"
+      message: "Product deleted successfully",
     });
   } catch (err) {
-    console.error("Delete Product Error:", err);
-    res.status(500).json({
-      success: false,
-      error: err.message
-    });
+    console.error("Delete error:", err);
+    res.status(500).json({ success: false, error: err.message });
   }
 };
-
 // Get Single Product by ID
 exports.getProductById = async (req, res) => {
   try {
