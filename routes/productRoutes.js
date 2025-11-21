@@ -11,13 +11,13 @@ const {
   getProductById
 } = require("../controllers/productController");
 
-// Public Route → Anyone can see products
-router.get("/getallproducts", getProducts);
-router.get("/:id", getProductById);
 
-// Protected Routes → Only Admin
+
+router.get("/getallproducts", getProducts);
 router.post("/add", auth, upload.array("files"), addProduct);
-router.put("/edit/:id", auth,  upload.array("files"),editProduct);
+router.put("/edit/:id", auth, upload.array("files"), editProduct);
 router.delete("/delete/:id", auth, deleteProduct);
+
+router.get("/:id", getProductById); // <-- Always keep dynamic last
 
 module.exports = router;
