@@ -1,4 +1,6 @@
 const Product = require("../models/Product");
+const cloudinary = require("../config/cloudinary");
+
 
 // Add Product (Admin Only)
 exports.addProduct = async (req, res) => {
