@@ -1,17 +1,13 @@
 const Project = require("../models/Project");
 const cloudinary = require("../config/cloudinary");
 
-// ADD PROJECT (following Product pattern)
+// ADD PROJECT
 exports.addProject = async (req, res) => {
   try {
     const { title, description } = req.body;
-
-    // req.files if multiple files, req.file if single
     const files = req.files || (req.file ? [req.file] : []);
-
     const uploadedFiles = [];
 
-    // Upload each file to Cloudinary
     for (const file of files) {
       const result = await cloudinary.uploader.upload(file.path, {
         folder: "skplastic/projects",
@@ -29,20 +25,20 @@ exports.addProject = async (req, res) => {
     const project = new Project({
       title,
       description,
-      images: uploadedFiles, // array of objects
+      images: uploadedFiles,
     });
 
     await project.save();
-    res.status(201).json({ 
+    res.status(201).json({
       success: true,
-      message: "Project added successfully", 
-      project 
+      message: "Project added successfully",
+      project,
     });
   } catch (err) {
-    console.error("Add Project Error:", err);
-    res.status(500).json({ 
+    console.error("Add Project Error:", err.stack || JSON.stringify(err, null, 2));
+    res.status(500).json({
       success: false,
-      error: err.message 
+      error: err.message,
     });
   }
 };
@@ -53,9 +49,10 @@ exports.getProjects = async (req, res) => {
     const projects = await Project.find().sort({ createdAt: -1 });
     res.json(projects);
   } catch (err) {
-    res.status(500).json({ 
-      error: "Failed to fetch projects", 
-      details: err.message 
+    console.error("Get Projects Error:", err.stack || JSON.stringify(err, null, 2));
+    res.status(500).json({
+      error: "Failed to fetch projects",
+      details: err.message,
     });
   }
 };
@@ -67,34 +64,30 @@ exports.getProjectById = async (req, res) => {
     const project = await Project.findById(id);
 
     if (!project) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        error: "Project not found" 
+        error: "Project not found",
       });
     }
 
     res.json(project);
   } catch (err) {
-    res.status(500).json({ 
-      error: "Failed to fetch project", 
-      details: err.message 
+    console.error("Get Project By ID Error:", err.stack || JSON.stringify(err, null, 2));
+    res.status(500).json({
+      error: "Failed to fetch project",
+      details: err.message,
     });
   }
 };
 
-// EDIT PROJECT (following Product pattern)
+// EDIT PROJECT
 exports.editProject = async (req, res) => {
   try {
     const { id } = req.params;
-
-    // Copy text fields from req.body
     const updates = { ...req.body };
-
-    // Handle uploaded files (multiple)
     const files = req.files || [];
     if (files.length > 0) {
       const uploadedFiles = [];
-
       for (const file of files) {
         const result = await cloudinary.uploader.upload(file.path, {
           folder: "skplastic/projects",
@@ -108,27 +101,24 @@ exports.editProject = async (req, res) => {
           filename: result.public_id,
         });
       }
-
-      // Replace existing images
       updates.images = uploadedFiles;
-      
-      // Or append to existing (uncomment if needed):
+      // To append to existing images, uncomment:
       // const existingProject = await Project.findById(id);
       // updates.images = [...(existingProject.images || []), ...uploadedFiles];
     }
 
     const project = await Project.findByIdAndUpdate(id, updates, { new: true });
 
-    res.json({ 
+    res.json({
       success: true,
-      message: "Project updated successfully", 
-      project 
+      message: "Project updated successfully",
+      project,
     });
   } catch (err) {
-    console.error("Edit Project Error:", err);
-    res.status(500).json({ 
+    console.error("Edit Project Error:", err.stack || JSON.stringify(err, null, 2));
+    res.status(500).json({
       success: false,
-      error: err.message 
+      error: err.message,
     });
   }
 };
@@ -140,29 +130,32 @@ exports.deleteProject = async (req, res) => {
     const project = await Project.findById(id);
 
     if (!project) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        error: "Project not found" 
+        error: "Project not found",
       });
     }
 
-    // Optional: Delete images from Cloudinary
     for (const img of project.images) {
       if (img.filename) {
-        await cloudinary.uploader.destroy(img.filename);
+        try {
+          await cloudinary.uploader.destroy(img.filename);
+        } catch (err) {
+          console.error("Cloudinary delete failed:", err.stack || JSON.stringify(err, null, 2));
+        }
       }
     }
 
     await Project.findByIdAndDelete(id);
-    res.json({ 
+    res.json({
       success: true,
-      message: "Project deleted successfully" 
+      message: "Project deleted successfully",
     });
   } catch (err) {
-    console.error("Delete Project Error:", err);
-    res.status(500).json({ 
+    console.error("Delete Project Error:", err.stack || JSON.stringify(err, null, 2));
+    res.status(500).json({
       success: false,
-      error: err.message 
+      error: err.message,
     });
   }
 };

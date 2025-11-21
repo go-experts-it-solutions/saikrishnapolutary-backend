@@ -14,19 +14,16 @@ exports.addContact = async (req, res) => {
       workingHours 
     } = req.body;
 
-    // Parse address if sent as JSON string
     let parsedAddress = address;
     if (typeof address === 'string') {
       parsedAddress = JSON.parse(address);
     }
 
-    // Parse workingHours if sent as JSON string
     let parsedWorkingHours = workingHours;
     if (typeof workingHours === 'string') {
       parsedWorkingHours = JSON.parse(workingHours);
     }
 
-    // Handle file uploads
     const files = req.files || [];
     const uploadedFiles = [];
 
@@ -36,7 +33,6 @@ exports.addContact = async (req, res) => {
         resource_type: "auto",
         public_id: file.originalname.split(".")[0],
       });
-
       uploadedFiles.push({
         url: result.secure_url,
         type: result.format,
@@ -49,7 +45,7 @@ exports.addContact = async (req, res) => {
       address: parsedAddress,
       location: {
         type: 'Point',
-        coordinates: [parseFloat(longitude), parseFloat(latitude)] // [lng, lat]
+        coordinates: [parseFloat(longitude), parseFloat(latitude)]
       },
       phone,
       email,
@@ -64,7 +60,7 @@ exports.addContact = async (req, res) => {
       contact 
     });
   } catch (err) {
-    console.error("Add Contact Error:", err);
+    console.error("Add Contact Error:", err.stack || JSON.stringify(err, null, 2));
     res.status(500).json({ 
       success: false,
       error: err.message 
@@ -82,6 +78,7 @@ exports.getContacts = async (req, res) => {
       contacts
     });
   } catch (err) {
+    console.error("Get Contacts Error:", err.stack || JSON.stringify(err, null, 2));
     res.status(500).json({ 
       error: "Failed to fetch contacts", 
       details: err.message 
@@ -107,6 +104,7 @@ exports.getContactById = async (req, res) => {
       contact
     });
   } catch (err) {
+    console.error("Get Contact By ID Error:", err.stack || JSON.stringify(err, null, 2));
     res.status(500).json({ 
       error: "Failed to fetch contact", 
       details: err.message 
@@ -117,7 +115,7 @@ exports.getContactById = async (req, res) => {
 // GET NEARBY STORES (using geospatial query)
 exports.getNearbyStores = async (req, res) => {
   try {
-    const { latitude, longitude, maxDistance = 5000 } = req.query; // maxDistance in meters
+    const { latitude, longitude, maxDistance = 5000 } = req.query;
 
     const stores = await Contact.find({
       location: {
@@ -137,6 +135,7 @@ exports.getNearbyStores = async (req, res) => {
       stores
     });
   } catch (err) {
+    console.error("Get Nearby Stores Error:", err.stack || JSON.stringify(err, null, 2));
     res.status(500).json({ 
       error: "Failed to fetch nearby stores", 
       details: err.message 
@@ -150,17 +149,14 @@ exports.editContact = async (req, res) => {
     const { id } = req.params;
     const updates = { ...req.body };
 
-    // Parse address if sent as JSON string
     if (updates.address && typeof updates.address === 'string') {
       updates.address = JSON.parse(updates.address);
     }
 
-    // Parse workingHours if sent as JSON string
     if (updates.workingHours && typeof updates.workingHours === 'string') {
       updates.workingHours = JSON.parse(updates.workingHours);
     }
 
-    // Update location if latitude/longitude provided
     if (updates.latitude && updates.longitude) {
       updates.location = {
         type: 'Point',
@@ -170,25 +166,21 @@ exports.editContact = async (req, res) => {
       delete updates.longitude;
     }
 
-    // Handle file uploads
     const files = req.files || [];
     if (files.length > 0) {
       const uploadedFiles = [];
-
       for (const file of files) {
         const result = await cloudinary.uploader.upload(file.path, {
           folder: "skplastic/contact",
           resource_type: "auto",
           public_id: file.originalname.split(".")[0],
         });
-
         uploadedFiles.push({
           url: result.secure_url,
           type: result.format,
           filename: result.public_id,
         });
       }
-
       updates.images = uploadedFiles;
     }
 
@@ -200,7 +192,7 @@ exports.editContact = async (req, res) => {
       contact 
     });
   } catch (err) {
-    console.error("Edit Contact Error:", err);
+    console.error("Edit Contact Error:", err.stack || JSON.stringify(err, null, 2));
     res.status(500).json({ 
       success: false,
       error: err.message 
@@ -221,10 +213,13 @@ exports.deleteContact = async (req, res) => {
       });
     }
 
-    // Delete images from Cloudinary
     for (const img of contact.images) {
       if (img.filename) {
-        await cloudinary.uploader.destroy(img.filename);
+        try {
+          await cloudinary.uploader.destroy(img.filename);
+        } catch (err) {
+          console.error("Cloudinary delete failed:", err.stack || JSON.stringify(err, null, 2));
+        }
       }
     }
 
@@ -234,7 +229,7 @@ exports.deleteContact = async (req, res) => {
       message: "Contact deleted successfully" 
     });
   } catch (err) {
-    console.error("Delete Contact Error:", err);
+    console.error("Delete Contact Error:", err.stack || JSON.stringify(err, null, 2));
     res.status(500).json({ 
       success: false,
       error: err.message 

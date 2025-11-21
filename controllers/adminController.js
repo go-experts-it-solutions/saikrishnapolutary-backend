@@ -3,22 +3,16 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 // Register admin (one-time use)
-// Register admin (one-time use)
 exports.registerAdmin = async (req, res) => {
   try {
     const { username, password } = req.body;
-
     const hashed = await bcrypt.hash(password, 10);
-
     const admin = new Admin({ username, password: hashed });
     await admin.save();
 
-    // Generate JWT token after register
     const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
-
-    // console.log("jwttokenid",token)
 
     res.json({
       message: "Admin registered successfully",
@@ -29,6 +23,7 @@ exports.registerAdmin = async (req, res) => {
       },
     });
   } catch (err) {
+    console.error("Register Admin Error:", err.stack || JSON.stringify(err, null, 2));
     res.status(500).json({ error: err.message });
   }
 };
@@ -50,6 +45,7 @@ exports.loginAdmin = async (req, res) => {
 
     res.json({ message: "Login successful", token });
   } catch (err) {
+    console.error("Login Admin Error:", err.stack || JSON.stringify(err, null, 2));
     res.status(500).json({ error: err.message });
   }
 };
