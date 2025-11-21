@@ -1,5 +1,7 @@
 const Project = require("../models/Project");
 const cloudinary = require("../config/cloudinary");
+const mongoose = require("mongoose");
+
 
 // ADD PROJECT
 exports.addProject = async (req, res) => {
