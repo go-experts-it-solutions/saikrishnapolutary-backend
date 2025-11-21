@@ -3,7 +3,7 @@ const Product = require("../models/Product");
 // Add Product (Admin Only)
 exports.addProduct = async (req, res) => {
   try {
-    const { name, description, price, category } = req.body;
+    const { name, description, specifications, category } = req.body;
 
     // console.log("aFD",name)
 
@@ -19,7 +19,7 @@ exports.addProduct = async (req, res) => {
     const product = new Product({
       name,
       description,
-      price,
+      specifications,
       category,
       files: uploadedFiles, // store array of uploaded files
     });
@@ -31,15 +31,19 @@ exports.addProduct = async (req, res) => {
   }
 };
 
+
 // Edit Product
 exports.editProduct = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Copy text fields from req.body
-    const updates = { ...req.body };
+    // Only pick permitted fields for update
+    const updates = {};
+    if (req.body.name !== undefined) updates.name = req.body.name;
+    if (req.body.description !== undefined) updates.description = req.body.description;
+    if (req.body.specifications !== undefined) updates.specifications = req.body.specifications; // handle specifications
+    if (req.body.category !== undefined) updates.category = req.body.category;
 
-    // Handle uploaded files (multiple)
     const files = req.files || [];
     if (files.length > 0) {
       const uploadedFiles = files.map((file) => ({
@@ -47,16 +51,10 @@ exports.editProduct = async (req, res) => {
         type: file.mimetype,
         filename: file.filename,
       }));
-
-      // Either replace or append to existing files
-      updates.files = uploadedFiles; // Replace existing files
-      // If you want to append instead: 
-      // const existingProduct = await Product.findById(id);
-      // updates.files = [...(existingProduct.files || []), ...uploadedFiles];
+      updates.files = uploadedFiles; // replace existing files (append logic can be added if needed)
     }
 
     const product = await Product.findByIdAndUpdate(id, updates, { new: true });
-
     res.json({ message: "Product updated successfully", product });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -73,19 +71,16 @@ exports.getProducts = async (req, res) => {
   }
 };
 
-
-
+// Delete Product
 exports.deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Find the product first to get file details
     const product = await Product.findById(id);
-
     if (!product) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        error: "Product not found" 
+        error: "Product not found"
       });
     }
 
@@ -95,30 +90,27 @@ exports.deleteProduct = async (req, res) => {
         if (file.filename) {
           try {
             await cloudinary.uploader.destroy(file.filename, {
-              resource_type: "auto", // handles images, videos, raw files
-              invalidate: true // clears CDN cache
+              resource_type: "auto",
+              invalidate: true
             });
             console.log(`Deleted file from Cloudinary: ${file.filename}`);
           } catch (cloudinaryError) {
             console.error(`Failed to delete ${file.filename}:`, cloudinaryError);
-            // Continue with deletion even if Cloudinary fails
           }
         }
       }
     }
 
-    // Delete the product from database
     await Product.findByIdAndDelete(id);
-
-    res.json({ 
+    res.json({
       success: true,
-      message: "Product and associated files deleted successfully" 
+      message: "Product and associated files deleted successfully"
     });
   } catch (err) {
     console.error("Delete Product Error:", err);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      error: err.message 
+      error: err.message
     });
   }
 };
@@ -130,9 +122,9 @@ exports.getProductById = async (req, res) => {
     const product = await Product.findById(id);
 
     if (!product) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        error: "Product not found" 
+        error: "Product not found"
       });
     }
 
@@ -141,9 +133,9 @@ exports.getProductById = async (req, res) => {
       product
     });
   } catch (err) {
-    res.status(500).json({ 
-      error: "Failed to fetch product", 
-      details: err.message 
+    res.status(500).json({
+      error: "Failed to fetch product",
+      details: err.message
     });
   }
 };

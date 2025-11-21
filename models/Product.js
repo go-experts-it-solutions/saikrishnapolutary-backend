@@ -11,7 +11,7 @@ const productSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     description: String,
-    price: Number,
+    specifications: String,
     category: String,
     files: [fileSchema],                       // Array of uploaded files
   },
