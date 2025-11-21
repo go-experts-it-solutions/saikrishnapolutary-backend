@@ -74,24 +74,25 @@ exports.getProducts = async (req, res) => {
 exports.getProductById = async (req, res) => {
   try {
     const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid product ID"
+      });
+    }
     const product = await Product.findById(id);
-
     if (!product) {
       return res.status(404).json({
         success: false,
-        error: "Product not found",
+        error: "Product not found"
       });
     }
-
-    res.json({
-      success: true,
-      product,
-    });
+    res.json({ success: true, product });
   } catch (err) {
     console.error("Get Product By ID error:", err.stack || JSON.stringify(err, null, 2));
     res.status(500).json({
       error: "Failed to fetch product",
-      details: err.message,
+      details: err.message
     });
   }
 };
