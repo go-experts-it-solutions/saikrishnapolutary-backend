@@ -1,5 +1,10 @@
-const Contact = require("../models/Contact");
+const nodemailer = require("nodemailer");
+const dotenv = require("dotenv");
+dotenv.config();
+const Contact=require("../models/Contact")
 const cloudinary = require("../config/cloudinary");
+
+
 
 // ADD CONTACT/STORE LOCATION
 exports.addContact = async (req, res) => {
@@ -234,5 +239,67 @@ exports.deleteContact = async (req, res) => {
       success: false,
       error: err.message 
     });
+  }
+};
+
+
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: parseInt(process.env.SMTP_PORT),
+
+  secure: false, // true if using port 465
+  auth: {
+    user: process.env.SMTP_USER, // Your Gmail
+    pass: process.env.SMTP_PASS  // Your Gmail App Password
+  }
+});
+
+// Send Enquiry function
+exports.sendEnquiry = async (req, res) => {
+  const { fullName, email, phone, message } = req.body;
+
+  if (!fullName || !email || !message) {
+    return res.status(400).json({ error: "Please fill all required fields." });
+  }
+
+  // Use your Gmail in "from" to satisfy Gmail SMTP
+const mailOptions = {
+  from: `"Website Enquiry - ${fullName}" <${process.env.SMTP_USER}>`,
+  to: process.env.TO_EMAIL,
+  subject: `New Enquiry from ${fullName}`,
+  html: `
+    <div style="font-family: Arial, sans-serif; font-size: 15px; color: #333;">
+      <h2 style="color: #1976D2;">New Website Enquiry</h2>
+      <table width="100%" border="0" cellpadding="8" style="border-collapse: collapse; background: #f9f9f9;">
+        <tr>
+          <td style="font-weight: bold;">Name:</td>
+          <td>${fullName}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold;">Email:</td>
+          <td>${email}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold;">Phone:</td>
+          <td>${phone || "N/A"}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold;">Message:</td>
+          <td>${message.replace(/\n/g,'<br />')}</td>
+        </tr>
+      </table>
+      <p style="margin-top: 24px; color: #888;">Sent from Sai Krishna Plastic Industries website</p>
+    </div>
+  `
+};
+
+
+  try {
+      // console.log("ahsfdbpo",to);
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ success: true, message: "Enquiry sent successfully." });
+  } catch (err) {
+    console.error("Send Enquiry Error:", err.stack || JSON.stringify(err, null, 2));
+    res.status(500).json({ success: false, error: "Failed to send email." });
   }
 };

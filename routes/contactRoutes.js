@@ -10,6 +10,7 @@ const {
   getNearbyStores,
   editContact,
   deleteContact,
+  sendEnquiry
 } = require("../controllers/contactController");
 
 // Public routes
@@ -21,5 +22,6 @@ router.get("/:id", getContactById);
 router.post("/add", auth, upload.array("images", 5), addContact);
 router.put("/edit/:id", auth, upload.array("images", 5), editContact);
 router.delete("/delete/:id", auth, deleteContact);
+router.post("/enquiry", sendEnquiry);
 
 module.exports = router;
