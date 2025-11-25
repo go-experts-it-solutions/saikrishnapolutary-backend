@@ -11,7 +11,7 @@ const productSchema = new mongoose.Schema(
     name: { type: String, required: true },
     description: String,
     specifications: String,
-    category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" }, // refer Category
+    category: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }], // refer Category
     files: [fileSchema]
   },
   { timestamps: true }
