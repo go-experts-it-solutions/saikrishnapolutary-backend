@@ -121,7 +121,10 @@ exports.editProduct = async (req, res) => {
 // Get All Products (public)
 exports.getProducts = async (req, res) => {
   try {
-    const products = await Product.find().sort({ createdAt: -1 });
+    const products = await Product.find()
+      .sort({ createdAt: -1 })
+      .populate({ path: "category", select: "name description" }); // add more fields as needed
+
     res.json(products);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch products", details: err.message });

@@ -3,7 +3,7 @@ const Category = require("../models/Category");
 // Get all categories
 exports.getCategories = async (req, res) => {
   try {
-    const categories = await Category.find().sort("name");
+    const categories = await Category.find({}, "_id name");
     res.json(categories);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch categories" });
