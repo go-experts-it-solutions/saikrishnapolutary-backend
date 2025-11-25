@@ -19,6 +19,8 @@ router.put("/edit/:id", auth, upload.array("files"), editProduct);
 router.delete("/delete/:id", auth, deleteProduct);
 router.get('/category/:category', getProductsByCategory);
 
-router.get("/:id", getProductById); // <-- Always keep dynamic last
+// LAST: Single product by ID
+router.get("/:id", getProductById);
+
 
 module.exports = router;

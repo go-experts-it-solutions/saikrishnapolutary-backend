@@ -1,10 +1,9 @@
 const mongoose = require("mongoose");
 
-// Sub-schema for uploaded files
 const fileSchema = new mongoose.Schema({
-  url: { type: String, required: true },      // Cloudinary URL
-  type: { type: String },                     // MIME type (image/pdf/video)
-  filename: { type: String },                 // Original filename
+  url: { type: String, required: true },
+  type: { type: String },
+  filename: { type: String }
 });
 
 const productSchema = new mongoose.Schema(
@@ -12,8 +11,8 @@ const productSchema = new mongoose.Schema(
     name: { type: String, required: true },
     description: String,
     specifications: String,
-    category: String,
-    files: [fileSchema],                       // Array of uploaded files
+    category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" }, // refer Category
+    files: [fileSchema]
   },
   { timestamps: true }
 );
