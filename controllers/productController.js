@@ -4,16 +4,14 @@ const mongoose = require("mongoose");
 
 
 
-// Add Product (Admin Only)
+
+
+
 // exports.addProduct = async (req, res) => {
 //   try {
-//     const { name, description, specifications, category } = req.body;
+//     const { name, description, specifications, category, priority } = req.body;
 
-//     // console.log("aFD",name)
-
-//     // req.files if multiple files, req.file if single
 //     const files = req.files || (req.file ? [req.file] : []);
-
 //     const uploadedFiles = files.map((file) => ({
 //       url: file.path,
 //       type: file.mimetype,
@@ -25,7 +23,9 @@ const mongoose = require("mongoose");
 //       description,
 //       specifications,
 //       category,
-//       files: uploadedFiles, // store array of uploaded files
+//       files: uploadedFiles,
+
+//       priority: priority || 0   // ⭐ add priority
 //     });
 
 //     await product.save();
@@ -35,30 +35,6 @@ const mongoose = require("mongoose");
 //   }
 // };
 
-
-
-exports.addProduct = async (req, res) => {
-  try {
-    const { name, description, specifications, category } = req.body; // `category` should be a valid Category ObjectId
-    const files = req.files || (req.file ? [req.file] : []);
-    const uploadedFiles = files.map((file) => ({
-      url: file.path,
-      type: file.mimetype,
-      filename: file.filename,
-    }));
-    const product = new Product({
-      name,
-      description,
-      specifications,
-      category, // expects ObjectId
-      files: uploadedFiles,
-    });
-    await product.save();
-    res.json({ message: "Product added successfully", product });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
 
 
 // Edit Product
@@ -92,29 +68,83 @@ exports.addProduct = async (req, res) => {
 
 
 
+exports.addProduct = async (req, res) => {
+
+
+  try {
+    const { name, description, specifications, category } = req.body;
+    const priority = req.body.priority ? Number(req.body.priority) : 0;
+
+
+    const files = req.files || (req.file ? [req.file] : []);
+
+    const uploadedFiles = files.map(file => ({
+      url: file.path,
+      type: file.mimetype,
+      filename: file.originalname || file.filename,
+    }));
+
+    const product = new Product({
+      name,
+      description,
+      specifications,
+      category,
+      files: uploadedFiles,
+      priority
+    });
+
+    await product.save();
+
+
+
+    res.json({ message: "Product added successfully", product });
+  } catch (err) {
+    console.error("Error Adding Product:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
 
 exports.editProduct = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const updates = {};
-    if (req.body.name !== undefined) updates.name = req.body.name;
-    if (req.body.description !== undefined) updates.description = req.body.description;
-    if (req.body.specifications !== undefined) updates.specifications = req.body.specifications;
-    if (req.body.category !== undefined) updates.category = req.body.category; // always ObjectId
-    const files = req.files || [];
-    if (files.length > 0) {
-      const uploadedFiles = files.map((file) => ({
-        url: file.path,
-        type: file.mimetype,
-        filename: file.filename,
-      }));
-      updates.files = uploadedFiles;
-    }
-    const product = await Product.findByIdAndUpdate(id, updates, { new: true });
-    res.json({ message: "Product updated successfully", product });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  try {
+    const { id } = req.params;
+    const updates = {};
+
+    // Update simple fields
+    if (req.body.name !== undefined) updates.name = req.body.name;
+    if (req.body.description !== undefined) updates.description = req.body.description;
+    if (req.body.specifications !== undefined) updates.specifications = req.body.specifications;
+    if (req.body.category !== undefined) updates.category = req.body.category;
+
+    // ⭐ Priority as Number
+    if (req.body.priority !== undefined) {
+      updates.priority = Number(req.body.priority);
+    }
+
+    // Handle uploaded files
+    const files = req.files || [];
+    if (files.length > 0) {
+      const uploadedFiles = files.map(file => ({
+        url: file.path,
+        type: file.mimetype,
+        filename: file.filename,
+      }));
+
+      updates.files = uploadedFiles;
+    }
+
+    // Update product
+    const product = await Product.findByIdAndUpdate(id, updates, { new: true });
+
+    res.json({
+      message: "Product updated successfully",
+      product,
+    });
+  } catch (err) {
+    console.log("err",err);
+    res.status(500).json({ error: err.message });
+  }
 };
 
 
@@ -122,12 +152,14 @@ exports.editProduct = async (req, res) => {
 exports.getProducts = async (req, res) => {
   try {
     const products = await Product.find()
-      .sort({ createdAt: -1 })
-      .populate({ path: "category", select: "name description" }); // add more fields as needed
+      .populate({ path: "category", select: "name description" });
 
     res.json(products);
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch products", details: err.message });
+    res.status(500).json({
+      error: "Failed to fetch products",
+      details: err.message
+    });
   }
 };
 

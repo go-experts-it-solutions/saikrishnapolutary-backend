@@ -12,7 +12,8 @@ const productSchema = new mongoose.Schema(
     description: String,
     specifications: String,
     category: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }], // refer Category
-    files: [fileSchema]
+    files: [fileSchema],
+    priority: { type: Number, default: 0 } 
   },
   { timestamps: true }
 );
