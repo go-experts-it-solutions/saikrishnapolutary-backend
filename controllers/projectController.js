@@ -6,23 +6,20 @@ const mongoose = require("mongoose");
 // ADD PROJECT
 exports.addProject = async (req, res) => {
   try {
+    console.log("REQ.BODY:", req.body);
+    console.log("REQ.FILES:", req.files);
+
     const { title, description } = req.body;
-    const files = req.files || (req.file ? [req.file] : []);
-    const uploadedFiles = [];
 
-    for (const file of files) {
-      const result = await cloudinary.uploader.upload(file.path, {
-        folder: "skplastic/projects",
-        resource_type: "auto",
-        public_id: file.originalname.split(".")[0],
-      });
-
-      uploadedFiles.push({
-        url: result.secure_url,
-        type: result.format,
-        filename: result.public_id,
-      });
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ success: false, error: "No images uploaded" });
     }
+
+    const uploadedFiles = req.files.map((file) => ({
+      url: file.path,       // Cloudinary URL
+      type: file.mimetype.split("/")[0], // image, video, etc
+      filename: file.filename || file.originalname,
+    }));
 
     const project = new Project({
       title,
@@ -31,13 +28,14 @@ exports.addProject = async (req, res) => {
     });
 
     await project.save();
+
     res.status(201).json({
       success: true,
       message: "Project added successfully",
       project,
     });
   } catch (err) {
-    console.error("Add Project Error:", err.stack || JSON.stringify(err, null, 2));
+    console.error("Add Project Error:", err.stack || err);
     res.status(500).json({
       success: false,
       error: err.message,
